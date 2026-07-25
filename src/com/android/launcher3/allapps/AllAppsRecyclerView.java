@@ -100,26 +100,37 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         mFastScrollHelper = new AllAppsFastScrollHelper(this);
 
         // --- NEW ROUNDED TOP CLIPPING ---
+        setClipToPadding(false); // Stop the default flat rectangular clip
+        
         setOutlineProvider(new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
                 float radius = Themes.getDialogCornerRadius(getContext());
                 
-                // Crucial fix: We start the curve at the absolute top (0, 0)
-                // instead of using getPaddingTop() so it hits the actual cut-off line.
+                // Start the curve exactly at the padding boundary where the old flat cut was
+                int top = view.getPaddingTop();
+                
+                // Push the bottom corners way off the screen
                 int extendedBottom = (int) (view.getHeight() + radius);
                 
                 outline.setRoundRect(
-                        0,               // Left edge
-                        0,               // Top edge (the hard straight line)
-                        view.getWidth(), // Right edge
-                        extendedBottom,  // Pushed off the bottom of the screen
+                        0,
+                        top,
+                        view.getWidth(),
+                        extendedBottom,
                         radius
                 );
             }
         });
         setClipToOutline(true);
         // --------------------------------
+    }
+
+    // Force the outline to update if the system changes the search bar height
+    @Override
+    public void setPadding(int left, int top, int right, int bottom) {
+        super.setPadding(left, top, right, bottom);
+        invalidateOutline();
     }
 
     /**
