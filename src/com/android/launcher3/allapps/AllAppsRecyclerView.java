@@ -35,12 +35,12 @@ import static com.android.launcher3.util.LogConfig.SEARCH_LOGGING;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Path;
-import android.graphics.RectF;
+import android.graphics.Outline;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -81,10 +81,6 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
 
     public AlphabeticalAppsList<?> mApps;
 
-    // Added for custom rounded top clipping
-    private final Path mHeaderClipPath = new Path();
-    private final RectF mHeaderClipRect = new RectF();
-
     public AllAppsRecyclerView(Context context) {
         this(context, null);
     }
@@ -102,6 +98,28 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         super(context, attrs, defStyleAttr);
         mNumAppsPerRow = LauncherAppState.getIDP(context).numColumns;
         mFastScrollHelper = new AllAppsFastScrollHelper(this);
+
+        // --- NEW ROUNDED TOP CLIPPING ---
+        setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                float radius = Themes.getDialogCornerRadius(getContext());
+                
+                // We stretch the bottom boundary way past the bottom of the view 
+                // so the bottom corners stay flat on-screen, and only the top rounds.
+                int extendedBottom = (int) (view.getHeight() + radius);
+                
+                outline.setRoundRect(
+                        view.getPaddingLeft(),
+                        view.getPaddingTop(),
+                        view.getWidth() - view.getPaddingRight(),
+                        extendedBottom,
+                        radius
+                );
+            }
+        });
+        setClipToOutline(true);
+        // --------------------------------
     }
 
     /**
@@ -139,36 +157,6 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         }
         pool.setMaxRecycledViews(
                 AllAppsGridAdapter.VIEW_TYPE_ICON, maxPoolSizeForAppIcons);
-    }
-
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        int save = canvas.save();
-
-        float radius = Themes.getDialogCornerRadius(getContext());
-
-        float[] radii = new float[] {
-            radius, radius, // Top-Left
-            radius, radius, // Top-Right
-            0, 0,           // Bottom-Right
-            0, 0            // Bottom-Left
-        };
-
-        // Replaced mBackgroundPadding with standard padding getters
-        mHeaderClipRect.set(
-            getPaddingLeft(),
-            getPaddingTop(),
-            getWidth() - getPaddingRight(),
-            getHeight()
-        );
-
-        mHeaderClipPath.reset();
-        mHeaderClipPath.addRoundRect(mHeaderClipRect, radii, Path.Direction.CW);
-
-        canvas.clipPath(mHeaderClipPath);
-
-        super.dispatchDraw(canvas);
-        canvas.restoreToCount(save);
     }
 
     @Override
