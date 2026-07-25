@@ -154,10 +154,11 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             0, 0            // Bottom-Left
         };
 
+        // Replaced mBackgroundPadding with standard padding getters
         mHeaderClipRect.set(
-            mBackgroundPadding.left,
-            mBackgroundPadding.top,
-            getWidth() - mBackgroundPadding.right,
+            getPaddingLeft(),
+            getPaddingTop(),
+            getWidth() - getPaddingRight(),
             getHeight()
         );
 
