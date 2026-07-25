@@ -105,15 +105,15 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             public void getOutline(View view, Outline outline) {
                 float radius = Themes.getDialogCornerRadius(getContext());
                 
-                // We stretch the bottom boundary way past the bottom of the view 
-                // so the bottom corners stay flat on-screen, and only the top rounds.
+                // Crucial fix: We start the curve at the absolute top (0, 0)
+                // instead of using getPaddingTop() so it hits the actual cut-off line.
                 int extendedBottom = (int) (view.getHeight() + radius);
                 
                 outline.setRoundRect(
-                        view.getPaddingLeft(),
-                        view.getPaddingTop(),
-                        view.getWidth() - view.getPaddingRight(),
-                        extendedBottom,
+                        0,               // Left edge
+                        0,               // Top edge (the hard straight line)
+                        view.getWidth(), // Right edge
+                        extendedBottom,  // Pushed off the bottom of the screen
                         radius
                 );
             }
