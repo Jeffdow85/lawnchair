@@ -35,6 +35,8 @@ import static com.android.launcher3.util.LogConfig.SEARCH_LOGGING;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -56,6 +58,7 @@ import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.logging.StatsLogManager;
+import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
@@ -77,6 +80,10 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     private ConstraintLayout mLetterList;
 
     public AlphabeticalAppsList<?> mApps;
+
+    // Added for custom rounded top clipping
+    private final Path mHeaderClipPath = new Path();
+    private final RectF mHeaderClipRect = new RectF();
 
     public AllAppsRecyclerView(Context context) {
         this(context, null);
@@ -132,6 +139,35 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         }
         pool.setMaxRecycledViews(
                 AllAppsGridAdapter.VIEW_TYPE_ICON, maxPoolSizeForAppIcons);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int save = canvas.save();
+
+        float radius = Themes.getDialogCornerRadius(getContext());
+
+        float[] radii = new float[] {
+            radius, radius, // Top-Left
+            radius, radius, // Top-Right
+            0, 0,           // Bottom-Right
+            0, 0            // Bottom-Left
+        };
+
+        mHeaderClipRect.set(
+            mBackgroundPadding.left,
+            mBackgroundPadding.top,
+            getWidth() - mBackgroundPadding.right,
+            getHeight()
+        );
+
+        mHeaderClipPath.reset();
+        mHeaderClipPath.addRoundRect(mHeaderClipRect, radii, Path.Direction.CW);
+
+        canvas.clipPath(mHeaderClipPath);
+
+        super.dispatchDraw(canvas);
+        canvas.restoreToCount(save);
     }
 
     @Override
